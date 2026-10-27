@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 
 from . import config
 from .db import Base, engine
-from .routers import admin, auth, capsules
+from .routers import admin, auth, capsules, health
 
 prod = config.ENVIRONMENT == "production"
 app = FastAPI(
@@ -30,6 +30,7 @@ async def security_headers(request: Request, call_next):
     return response
 
 
+app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(capsules.router)
 app.include_router(admin.router)
