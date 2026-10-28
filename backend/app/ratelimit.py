@@ -1,24 +1,47 @@
-"""In-process login throttle; not suitable for multi-worker production deployment."""
+"""Bounded in-process login throttle; use a shared store before multi-worker deployment."""
 import time
-from collections import defaultdict
 
 MAX_FAILS = 5
 WINDOW = 15 * 60
-_fails: dict[str, list[float]] = defaultdict(list)
+MAX_KEYS = 10_000
+_fails: dict[str, list[float]] = {}
 
 
-def _prune(key: str) -> list[float]:
-    cutoff = time.time() - WINDOW
-    _fails[key] = [t for t in _fails[key] if t > cutoff]
-    return _fails[key]
+def _now(value: float | None = None) -> float:
+    return time.monotonic() if value is None else value
 
 
-def is_blocked(key: str) -> bool:
-    return len(_prune(key)) >= MAX_FAILS
+def _prune(key: str, now: float | None = None) -> list[float]:
+    current = _now(now)
+    attempts = [stamp for stamp in _fails.get(key, []) if stamp > current - WINDOW]
+    if attempts:
+        _fails[key] = attempts
+    else:
+        _fails.pop(key, None)
+    return attempts
 
 
-def record_failure(key: str) -> None:
-    _prune(key).append(time.time())
+def is_blocked(key: str, now: float | None = None) -> bool:
+    return len(_prune(key, now)) >= MAX_FAILS
+
+
+def record_failure(key: str, now: float | None = None) -> None:
+    current = _now(now)
+    attempts = _prune(key, current)
+    if key not in _fails:
+        # Prune stale keys before enforcing the hard cap. If an attacker cycles
+        # arbitrary identifiers, memory remains bounded even under sustained load.
+        if len(_fails) >= MAX_KEYS:
+            for existing in list(_fails):
+                _prune(existing, current)
+        if len(_fails) >= MAX_KEYS:
+            # Evict the least-recently-failed key. This is a bounded fallback, not
+            # a substitute for a shared, abuse-resistant production rate limiter.
+            oldest = min(_fails, key=lambda existing: _fails[existing][-1])
+            del _fails[oldest]
+        _fails[key] = []
+        attempts = _fails[key]
+    attempts.append(current)
 
 
 def reset(key: str) -> None:
