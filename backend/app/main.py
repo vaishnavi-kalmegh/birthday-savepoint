@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 
 from . import config
@@ -5,19 +7,23 @@ from .db import Base, engine
 from .routers import admin, auth, capsules, health
 
 prod = config.ENVIRONMENT == "production"
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Development convenience only. Production requires migrations before deployment.
+    if not prod:
+        Base.metadata.create_all(engine)
+    yield
+
+
 app = FastAPI(
     title="birthday-savepoint",
     docs_url=None if prod else "/docs",
     redoc_url=None,
     openapi_url=None if prod else "/openapi.json",
+    lifespan=lifespan,
 )
-
-
-@app.on_event("startup")
-def _create_tables_dev() -> None:
-    # Development convenience only. Production requires migrations before deployment.
-    if not prod:
-        Base.metadata.create_all(engine)
 
 
 @app.middleware("http")
