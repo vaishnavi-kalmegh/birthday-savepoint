@@ -61,6 +61,21 @@ def logout(response: Response, s: AuthSession = Depends(current_session), db: Se
     return {"ok": True}
 
 
+@router.post("/csrf")
+def refresh_csrf(
+    s: AuthSession = Depends(current_session),
+    db: Session = Depends(get_db),
+):
+    # Bootstrap a CSRF token after a page reload. This endpoint requires the
+    # existing SameSite=Strict session cookie and returns the token only in its
+    # response body; the token itself is never stored in browser local storage.
+    csrf = new_token()
+    s.csrf_hash = sha256(csrf)
+    db.add(s)
+    db.commit()
+    return {"csrf_token": csrf}
+
+
 @router.get("/me")
 def me(user: User = Depends(current_user)):
     return {"display_name": user.display_name, "theme": user.theme}
