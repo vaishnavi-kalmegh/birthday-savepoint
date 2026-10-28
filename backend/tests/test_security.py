@@ -15,7 +15,9 @@ def test_1_cannot_read_other_friends_capsule_by_changing_id(world):
     response = client.get(f"/api/capsules/{world['ids']['bob']['past']}")
     assert response.status_code == 404
     assert client.get("/api/capsules/" + "0" * 32).status_code == 404
-    listed = {item["id"] for item in client.get("/api/capsules").json()}
+    listed = {
+        item["id"] for item in client.get("/api/capsules").json() if "id" in item
+    }
     assert world["ids"]["bob"]["past"] not in listed
 
 
