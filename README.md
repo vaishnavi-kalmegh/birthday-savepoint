@@ -4,7 +4,7 @@ A private, personalized birthday time-capsule experience for friends. Each perso
 
 ## Status on this branch
 
-The `phase1-backend` branch contains an initial backend implementation with authentication/session handling, owner-scoped capsules, server-side birthday locking, admin endpoints, and tests. **The test suite has not yet been run in a real dependency-installed environment. Do not treat this as production-ready.** The `main` branch remains documentation-only.
+The `phase1-hardening` branch contains the backend foundation and privacy hardening. The `phase2-first-vertical-slice` branch adds the first React + TypeScript + Vite interface for login, a private memory shelf, sealed placeholders, and letter viewing. These changes are under review in draft PRs; check GitHub Actions for current verification status. `main` remains unchanged. This is not production-ready.
 
 ## Product goals
 
@@ -23,7 +23,7 @@ The `phase1-backend` branch contains an initial backend implementation with auth
 
 ## Development instructions
 
-See [CLAUDE.md](./CLAUDE.md) for coding-agent instructions, security requirements, working protocol, and the first vertical slice. See [docs/PROJECT_CONTEXT.md](./docs/PROJECT_CONTEXT.md) and [docs/IMPLEMENTATION_PLAN.md](./docs/IMPLEMENTATION_PLAN.md) for product context and staged implementation. Backend setup and limitations are in [backend/README.md](./backend/README.md), with security notes in [backend/SECURITY.md](./backend/SECURITY.md).
+See [CLAUDE.md](./CLAUDE.md) for coding-agent instructions, security requirements, working protocol, and the first vertical slice. Frontend setup is documented in [frontend/README.md](./frontend/README.md). See [docs/PROJECT_CONTEXT.md](./docs/PROJECT_CONTEXT.md) and [docs/IMPLEMENTATION_PLAN.md](./docs/IMPLEMENTATION_PLAN.md) for product context and staged implementation. Backend setup and limitations are in [backend/README.md](./backend/README.md), with security notes in [backend/SECURITY.md](./backend/SECURITY.md).
 
 ## Security note
 
