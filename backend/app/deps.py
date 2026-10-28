@@ -30,6 +30,10 @@ def current_user(s: AuthSession = Depends(current_session), db: Session = Depend
 
 
 def csrf_protect(request: Request, s: AuthSession = Depends(current_session)) -> None:
+    # Safe methods must not require a CSRF header. Authentication/authorization
+    # dependencies still apply to protected routes.
+    if request.method in {"GET", "HEAD", "OPTIONS"}:
+        return
     sent = request.headers.get("x-csrf-token", "")
     if not hmac.compare_digest(sha256(sent), s.csrf_hash):
         raise HTTPException(403, "Invalid CSRF token")
