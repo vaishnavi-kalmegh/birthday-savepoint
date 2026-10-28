@@ -1,8 +1,10 @@
+import json
 from datetime import datetime, timezone
+from typing import Any
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -26,15 +28,32 @@ class FriendIn(BaseModel):
     display_name: str = Field(min_length=1, max_length=80)
     birth_month: int = Field(ge=1, le=12)
     birth_day: int = Field(ge=1, le=31)
-    timezone: str = "UTC"
-    theme: dict = Field(default_factory=dict)
+    timezone: str = Field(default="UTC", max_length=64)
+    theme: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("theme")
+    @classmethod
+    def theme_must_be_small_json(cls, value: dict[str, Any]) -> dict[str, Any]:
+        try:
+            encoded = json.dumps(value, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+        except (TypeError, ValueError):
+            raise ValueError("theme must contain JSON-compatible values")
+        if len(encoded) > 8192:
+            raise ValueError("theme must be at most 8192 bytes")
+        return value
+
+
+class LetterBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    text: str = Field(min_length=1, max_length=20_000)
+    title: str | None = Field(default=None, max_length=120)
 
 
 class CapsuleIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     year: int = Field(ge=2000, le=2200)
     content_type: str = Field(pattern=r"^letter$")
-    body: dict
+    body: LetterBody
     published: bool = False
 
 
@@ -70,7 +89,7 @@ def create_capsule(public_id: str, body: CapsuleIn, db: Session = Depends(get_db
         raise HTTPException(404, "Not found")
     capsule = Capsule(
         owner_id=user.id, year=body.year, content_type=body.content_type,
-        body=body.body, published=body.published,
+        body=body.body.model_dump(exclude_none=True), published=body.published,
         unlock_at=unlock_moment(user.birth_month, user.birth_day, body.year, user.timezone),
     )
     db.add(capsule)
@@ -83,10 +102,16 @@ def create_capsule(public_id: str, body: CapsuleIn, db: Session = Depends(get_db
 
 
 @router.post("/friends/{public_id}/disable")
-def disable_friend(public_id: str, db: Session = Depends(get_db)):
+def disable_friend(
+    public_id: str,
+    actor: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
     user = db.scalar(select(User).where(User.public_id == public_id))
     if user is None:
         raise HTTPException(404, "Not found")
+    if user.id == actor.id:
+        raise HTTPException(400, "The active admin cannot disable their own account")
     user.is_active = False
     now = datetime.now(timezone.utc)
     sessions = db.scalars(select(AuthSession).where(
