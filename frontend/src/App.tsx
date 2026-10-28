@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { ArrowLeft, ArrowUpRight, BookOpen, Check, LockKeyhole, LogOut, MoonStar, Sparkles } from "lucide-react";
 import { getCapsule, getCapsules, login, logout, openCapsule, restoreSession, type Capsule, type CapsuleSummary, type Profile } from "./api";
 
@@ -9,7 +9,7 @@ export default function App(){
  const [screen,setScreen]=useState<Screen>("loading"),[profile,setProfile]=useState<Profile|null>(null),[capsules,setCapsules]=useState<CapsuleSummary[]>([]),[selected,setSelected]=useState<Capsule|null>(null),[error,setError]=useState(""),[loginId,setLoginId]=useState(""),[password,setPassword]=useState(""),[busy,setBusy]=useState(false);
  const loadWorld=useCallback(async(who:Profile)=>{setProfile(who);setCapsules(await getCapsules());setScreen("world")},[]);
  useEffect(()=>{let alive=true;restoreSession().then(async who=>{const items=await getCapsules();if(alive){setProfile(who);setCapsules(items);setScreen("world")}}).catch(()=>{if(alive)setScreen("login")});return()=>{alive=false}},[]);
- async function handleLogin(e:React.FormEvent<HTMLFormElement>){e.preventDefault();setError("");setBusy(true);try{await login(loginId.trim(),password);const who=await restoreSession();await loadWorld(who)}catch{setError("Couldn't sign in with those details.")}finally{setBusy(false)}}
+ async function handleLogin(e:FormEvent<HTMLFormElement>){e.preventDefault();setError("");setBusy(true);try{await login(loginId.trim(),password);const who=await restoreSession();await loadWorld(who)}catch{setError("Couldn't sign in with those details.")}finally{setBusy(false)}}
  async function choose(item:CapsuleSummary){if(!item.id||item.state==="sealed")return;setBusy(true);setError("");try{const capsule=await getCapsule(item.id);if(item.state==="available")await openCapsule(item.id);setSelected(capsule);setScreen("letter");setCapsules(await getCapsules())}catch{setError("This savepoint isn't available right now.")}finally{setBusy(false)}}
  async function signOut(){try{await logout()}catch{}setProfile(null);setCapsules([]);setSelected(null);setPassword("");setScreen("login")}
  if(screen==="loading")return <main className="loading"><div className="brand-icon"><MoonStar/></div><span>finding your savepoint</span><div className="loading-line"/></main>;
