@@ -78,4 +78,4 @@ def refresh_csrf(
 
 @router.get("/me")
 def me(user: User = Depends(current_user)):
-    return {"display_name": user.display_name, "theme": user.theme}
+    return {"display_name": user.display_name, "theme": user.theme, "is_admin": user.is_admin}
