@@ -79,7 +79,7 @@ def test_4_no_endpoint_enumerates_users(world):
     login(client, "alice")
     for path in ("/api/users", "/api/friends", "/api/admin/friends", "/api/auth/users"):
         assert client.get(path).status_code in (404, 405)
-    assert set(client.get("/api/auth/me").json()) == {"display_name", "theme"}
+    assert set(client.get("/api/auth/me").json()) == {"display_name", "theme", "is_admin"}
 
 
 def test_4b_login_errors_do_not_reveal_which_accounts_exist(world):
