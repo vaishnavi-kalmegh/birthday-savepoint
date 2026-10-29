@@ -1,6 +1,8 @@
-import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
 import ThemeScene, { resolveScene } from "./ThemeScene";
+
+afterEach(() => cleanup());
 
 describe("personalized theme scenes", () => {
   it("uses a safe default for missing or unknown theme data", () => {
