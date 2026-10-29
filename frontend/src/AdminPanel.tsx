@@ -11,7 +11,7 @@ const scenes = [
 export default function AdminPanel() {
   const [friend, setFriend] = useState({ login_id: "", password: "", display_name: "", birth_month: "1", birth_day: "1", timezone: "Asia/Kolkata", scene: "moonlit-hills" });
   const [publicId, setPublicId] = useState("");
-  const [year, setYear] = useState(String(new Date().getFullYear()));
+  const [year, setYear] = useState(String(new Date().getFullYear() + 1));
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [published, setPublished] = useState(false);
