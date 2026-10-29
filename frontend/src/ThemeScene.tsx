@@ -1,5 +1,3 @@
-import type { CSSProperties } from "react";
-
 export type SceneKey = "cat-garden" | "racing-night" | "comic-rooftop" | "moonlit-hills";
 
 export function resolveScene(theme: Record<string, unknown> | undefined): SceneKey {
