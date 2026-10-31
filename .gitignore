@@ -36,3 +36,7 @@ postgres-data/
 Thumbs.db
 .idea/
 .vscode/
+
+# Real letters and gift content (never commit)
+private/
+*.egg-info/
